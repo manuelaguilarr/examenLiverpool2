@@ -12,6 +12,7 @@ import org.openqa.selenium.support.ui.WebDriverWait;
 import java.time.Duration;
 
 public class BasePage {
+
     protected WebDriver driver;
     protected WebDriverWait wait;
 
@@ -21,7 +22,11 @@ public class BasePage {
         this.wait = new WebDriverWait(driver, Duration.ofSeconds(15));
     }
 
-    // Permite esperas cortas puntuales (banners, variantes opcionales) sin saturar el timeout global
+    // =========================================================================
+    // ESPERAS EXPLÍCITAS
+    // =========================================================================
+
+    // Espera corta puntual (banners, variantes opcionales) sin saturar el timeout global
     protected WebDriverWait waitSeconds(int seconds) {
         return new WebDriverWait(driver, Duration.ofSeconds(seconds));
     }
@@ -34,6 +39,10 @@ public class BasePage {
         return wait.until(ExpectedConditions.elementToBeClickable(locator));
     }
 
+    // =========================================================================
+    // NAVEGACIÓN EN VIEWPORT E INTERACCIONES
+    // =========================================================================
+
     // Centra el elemento en pantalla para evitar intercepciones de headers o overlays
     protected void scrollToCenter(WebElement element) {
         ((JavascriptExecutor) driver).executeScript("arguments[0].scrollIntoView({block: 'center'});", element);
@@ -45,22 +54,27 @@ public class BasePage {
         element.click();
     }
 
-    // Respaldo útil cuando un componente React intercepta el clic nativo de WebDriver
     protected void jsClick(WebElement element) {
         scrollToCenter(element);
         ((JavascriptExecutor) driver).executeScript("arguments[0].click();", element);
     }
 
-    protected void type(By locator, String text) {
-        WebElement element = waitForVisibility(locator);
-        element.clear();
-        element.sendKeys(text);
+    // Respaldo cuando un componente React intercepta el clic nativo de WebDriver
+    protected void jsClick(By locator) {
+        jsClick(waitForClickability(locator));
     }
 
     protected void hover(By locator) {
         WebElement element = waitForVisibility(locator);
         scrollToCenter(element);
         new Actions(driver).moveToElement(element).perform();
+    }
+
+    protected void type(By locator, String text) {
+        WebElement element = waitForVisibility(locator);
+        scrollToCenter(element);
+        element.clear();
+        element.sendKeys(text);
     }
 
     protected void pressEnter(By locator) {

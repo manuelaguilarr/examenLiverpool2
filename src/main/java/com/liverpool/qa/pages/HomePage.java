@@ -8,7 +8,6 @@ import org.openqa.selenium.support.ui.ExpectedConditions;
 
 public class HomePage extends BasePage {
 
-    // Localizadores principales del Home y encabezado
     private By btnAceptarCookies = By.xpath(
             "//button[contains(translate(., 'ACEPTAR', 'aceptar'), 'aceptar') or @id='onetrust-accept-btn-handler']"
     );
@@ -34,8 +33,9 @@ public class HomePage extends BasePage {
      */
     public void cerrarBannerCookiesSiExiste() {
         try {
-            WebElement btnCookies = waitSeconds(3).until(ExpectedConditions.elementToBeClickable(btnAceptarCookies));
-            btnCookies.click();
+            waitSeconds(3)
+                    .until(ExpectedConditions.elementToBeClickable(btnAceptarCookies))
+                    .click();
         } catch (Exception ignored) {
             // El banner no se mostró en esta sesión
         }
@@ -46,13 +46,7 @@ public class HomePage extends BasePage {
      * Lanza IllegalArgumentException si alguna no existe en el menú desplegado (soporte CN-01).
      */
     public void navegarPorCategoria(String categoria, String subcategoria) {
-        WebElement elMenuCategorias = waitForClickability(btnCategorias);
-        scrollToCenter(elMenuCategorias);
-        try {
-            elMenuCategorias.click();
-        } catch (Exception e) {
-            jsClick(elMenuCategorias);
-        }
+        clicSeguro(waitForClickability(btnCategorias));
 
         By locatorCategoria = By.xpath("//*[normalize-space(text())='" + categoria + "']");
         try {
@@ -68,12 +62,7 @@ public class HomePage extends BasePage {
         By locatorSubcategoria = By.xpath("//*[normalize-space(text())='" + subcategoria + "']");
         try {
             WebElement elSubcategoria = waitSeconds(4).until(ExpectedConditions.elementToBeClickable(locatorSubcategoria));
-            scrollToCenter(elSubcategoria);
-            try {
-                elSubcategoria.click();
-            } catch (Exception ex) {
-                jsClick(elSubcategoria);
-            }
+            clicSeguro(elSubcategoria);
         } catch (Exception e) {
             throw new IllegalArgumentException(
                     "CN-01 Error de navegación: La subcategoría '" + subcategoria + "' no existe dentro de '" + categoria + "'."
@@ -84,39 +73,38 @@ public class HomePage extends BasePage {
     /**
      * Selecciona el primer producto disponible en la cuadrícula de resultados de la subcategoría.
      */
-    /**
-     * Selecciona el primer producto disponible en la cuadrícula de resultados de la subcategoría.
-     */
     public void seleccionarPrimerProducto() {
         String urlSubcategoria = driver.getCurrentUrl();
-        waitSeconds(6).until(d -> !d.getCurrentUrl().equals("https://www.liverpool.com.mx/tienda/home"));
 
-        WebElement producto = waitForClickability(primerProductoListado);
-        scrollToCenter(producto);
-        try {
-            producto.click();
-        } catch (Exception e) {
-            jsClick(producto);
-        }
+        WebElement producto = waitSeconds(12)
+                .until(ExpectedConditions.elementToBeClickable(primerProductoListado));
+        clicSeguro(producto);
 
         // Respaldo por si el clic recayó en la <img> y React delega el evento al contenedor padre
         try {
-            waitSeconds(3).until(d -> !d.getCurrentUrl().equals(urlSubcategoria));
+            waitSeconds(4).until(d -> !d.getCurrentUrl().equals(urlSubcategoria));
         } catch (Exception ignored) {
-            WebElement reintento = waitForVisibility(primerProductoListado);
-            jsClick(reintento);
+            jsClick(waitForVisibility(primerProductoListado));
         }
     }
+
     /**
      * Navega hacia la vista de bolsa/carrito desde el header.
      */
     public void irABolsa() {
-        WebElement bolsa = waitForClickability(iconoBolsaHeader);
-        scrollToCenter(bolsa);
+        clicSeguro(waitForClickability(iconoBolsaHeader));
+    }
+
+    // =========================================================================
+    // HELPERS PRIVADOS
+    // =========================================================================
+
+    private void clicSeguro(WebElement elemento) {
+        scrollToCenter(elemento);
         try {
-            bolsa.click();
+            elemento.click();
         } catch (Exception e) {
-            jsClick(bolsa);
+            jsClick(elemento);
         }
     }
 }

@@ -15,16 +15,21 @@ import org.testng.annotations.Test;
 public class LiverpoolCheckoutTest {
 
     private static final String URL_HOME = "https://www.liverpool.com.mx/tienda/home";
+
+    // Parámetros configurables para Casos Edge (CE)
+    private static final int CANTIDAD_EXCEDIDA_CE01 = 105;
+    private static final String MENSAJE_ESPERADO_CE01 =
+            "Algunos artículos ya no están disponibles en la cantidad solicitada.";
+
     private WebDriver driver;
 
     // =========================================================================
-    // CONFIGURACIÓN DE CICLO DE VIDA (SETUP / TEARDOWN)
+    // CICLO DE VIDA DE PRUEBA (SETUP / TEARDOWN)
     // =========================================================================
 
     @BeforeMethod
     public void setUp() {
         ChromeOptions options = new ChromeOptions();
-        // Reutiliza el perfil local para conservar sesión/preferencias y reducir fricción en pruebas
         options.addArguments("user-data-dir=C:\\selenium-profiles\\liverpool-qa");
         options.addArguments("--disable-blink-features=AutomationControlled");
 
@@ -41,7 +46,7 @@ public class LiverpoolCheckoutTest {
     }
 
     // =========================================================================
-    // ESCENARIOS POSITIVOS (CF)
+    // CASOS DE FLUJO (CF)
     // =========================================================================
 
     @DataProvider(name = "rutasPositivasCF01")
@@ -61,18 +66,7 @@ public class LiverpoolCheckoutTest {
         ProductDetailPage pdp = new ProductDetailPage(driver);
         BagPage bagPage = new BagPage(driver);
 
-        homePage.cerrarBannerCookiesSiExiste();
-        homePage.navegarPorCategoria(categoria, subcategoria);
-
-        String urlListado = driver.getCurrentUrl();
-        homePage.seleccionarPrimerProducto();
-        Assert.assertNotEquals(
-                driver.getCurrentUrl(),
-                urlListado,
-                "CF-01 Error: No se navegó al PDP al seleccionar el primer producto en " + categoria + " - " + subcategoria
-        );
-
-        pdp.seleccionarTallaSiAplica();
+        abrirProductoEnPDP(homePage, pdp, categoria, subcategoria, "CF-01");
 
         boolean agregado = pdp.agregarABolsaYConfirmar();
         Assert.assertTrue(
@@ -91,7 +85,7 @@ public class LiverpoolCheckoutTest {
     }
 
     // =========================================================================
-    // ESCENARIOS NEGATIVOS (CN)
+    // CASOS NEGATIVOS (CN)
     // =========================================================================
 
     @DataProvider(name = "rutasNegativasCN01")
@@ -110,7 +104,6 @@ public class LiverpoolCheckoutTest {
     )
     public void testCN01NavegacionInvalidaEnMenu(String categoria, String subcategoria) {
         HomePage homePage = new HomePage(driver);
-
         homePage.cerrarBannerCookiesSiExiste();
 
         IllegalArgumentException excepcion = Assert.expectThrows(
@@ -123,5 +116,52 @@ public class LiverpoolCheckoutTest {
                 excepcion.getMessage().contains(categoria) || excepcion.getMessage().contains(subcategoria),
                 "CN-01 Error: El mensaje no detalla el dato evaluado. Mensaje: " + excepcion.getMessage()
         );
+    }
+
+    // =========================================================================
+    // CASOS EDGE (CE)
+    // =========================================================================
+
+    @Test(
+            description = "CE-01: Validar mensaje de pop-up al intentar agregar más de 100 piezas de un artículo"
+    )
+    public void testCE01CantidadExcedidaArticulo() {
+        HomePage homePage = new HomePage(driver);
+        ProductDetailPage pdp = new ProductDetailPage(driver);
+
+        abrirProductoEnPDP(homePage, pdp, "Zapatos", "Botas", "CE-01");
+
+        String mensajeObtenido = pdp.intentarAgregarCantidadYCapturarMensajeCE01(CANTIDAD_EXCEDIDA_CE01);
+        Assert.assertEquals(
+                mensajeObtenido,
+                MENSAJE_ESPERADO_CE01,
+                "CE-01 Error: No se mostró el mensaje esperado al intentar agregar " +
+                        CANTIDAD_EXCEDIDA_CE01 + " piezas."
+        );
+    }
+
+    // =========================================================================
+    // HELPERS PRIVADOS
+    // =========================================================================
+
+    private void abrirProductoEnPDP(
+            HomePage homePage,
+            ProductDetailPage pdp,
+            String categoria,
+            String subcategoria,
+            String prefijoCaso
+    ) {
+        homePage.cerrarBannerCookiesSiExiste();
+        homePage.navegarPorCategoria(categoria, subcategoria);
+
+        String urlListado = driver.getCurrentUrl();
+        homePage.seleccionarPrimerProducto();
+        Assert.assertNotEquals(
+                driver.getCurrentUrl(),
+                urlListado,
+                prefijoCaso + " Error: No se navegó al PDP al seleccionar el primer producto en " + categoria + " - " + subcategoria
+        );
+
+        pdp.seleccionarTallaSiAplica();
     }
 }

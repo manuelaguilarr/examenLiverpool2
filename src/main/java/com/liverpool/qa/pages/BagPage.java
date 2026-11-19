@@ -32,14 +32,13 @@ public class BagPage extends BasePage {
     }
 
     /**
-     * Centra el botón "Comprar" del resumen y dispara el inicio del checkout.
+     * Dispara el inicio del checkout desde el botón "Comprar" del resumen de bolsa.
      */
     public void irAComprarAhora() {
-        WebElement btn = waitForClickability(btnComprar);
         try {
             click(btnComprar);
         } catch (Exception e) {
-            jsClick(btn);
+            jsClick(btnComprar);
         }
     }
 }
