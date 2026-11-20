@@ -1,6 +1,8 @@
 Automatización QA - Flujo de Compra Liverpool (Selenium + TestNG)
+
 Este proyecto es un framework de automatización de pruebas funcionales desarrollado en Java utilizando Selenium WebDriver y TestNG bajo el patrón de diseño Page Object Model (POM).
 Su objetivo principal es validar de forma rápida, repetible y confiable el flujo crítico de selección y agregado de productos a la bolsa de compras en el portal de Liverpool, cubriendo escenarios positivos, negativos y de frontera (edge cases).
+
 ---
 Estructura del Proyecto
 El proyecto separa la lógica de interacción con la página web de las validaciones de negocio:
